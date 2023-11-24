@@ -33,12 +33,12 @@ jobs:
     - name: Apply Terraform
       run: terraform apply -auto-approve
 
-    - name: Debug Terra
-      run: terraform output -raw public_ip
+        #- name: Debug Terra
+        #run: terraform output -raw public_ip
 
-    - name: Extract EC2 public IP
-      id: extract-ip
-      run: echo "ip=$(terraform output -raw public_ip)" >> "$GITHUB_OUTPUT"
+        #- name: Extract EC2 public IP
+        #id: extract-ip
+        #run: echo "ip=$(terraform output -raw public_ip)" >> "$GITHUB_OUTPUT"
 
     - name: Create the json file
       run: |
