@@ -1,0 +1,84 @@
+name: Deploy Docker to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_ACCESS_KEY_ID: ${{secrets.AWS_KEY}}
+  AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET}}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.10.13
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.1.0
+
+    - name: Initialize Terraform
+      run: terraform init
+
+    - name: Apply Terraform
+      run: terraform apply -auto-approve
+
+    - name: Debug Terra
+      run: terraform output -raw public_ip
+
+    - name: Extract EC2 public IP
+      id: extract-ip
+      run: echo "ip=$(terraform output -raw public_ip)" >> "$GITHUB_OUTPUT"
+
+    - name: Create the json file
+      run: |
+        terraform output -json > output.json
+        cat output.json | jq -r --stream '.'
+
+    - name: Extract version from package.json
+      uses: sergeysova/jq-action@v2
+      id: ip
+      with:
+        cmd: 'jq -r --stream .public_ip.value output.json' 
+    
+    - name: Show my version
+      run: 'echo "mon ip is ${{ steps.extract-ip.outputs.value }}"'
+
+    # - name: Wait for EC2 instance to be ready
+    #   run: |
+    #     sleep 120
+    #     # #timeout=300
+    #     # #elapsed=0
+    #     # while true; do
+    #     #   if ssh -o StrictHostKeyChecking=no -i ec2_private_key.pem ${{ secrets.EC2_USERNAME }}@${{ steps.ip.outputs.value }} 'docker -v'; then
+    #     #     echo "Docker is installed and running on the EC2 instance."
+    #     #     break
+    #     #   fi
+    #     #   sleep 10
+    #     #   elapsed=$((elapsed + 10))
+    #     # done
+    #     # if [ $elapsed -ge $timeout ]; then
+    #     #   echo "Timed out waiting for Docker on the EC2 instance."
+    #     #   exit 1
+    #     # fi
+
+    # - name: Deploy to EC2
+    #   uses: appleboy/ssh-action@master
+    #   with:
+    #     host: ${{ steps.ip.outputs.value }}
+    #     username: ${{ secrets.EC2_USERNAME }}
+    #     key: ${{ secrets.EC2_PRIVATE_KEY }}
+    #     port: ${{ secrets.PORT }}
+    #     script: |
+    #       # Run the Docker container
+    #       sudo docker run -d -p 80:80 --name flaskapp rapidfort/flaskapp
