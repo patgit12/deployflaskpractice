@@ -43,13 +43,14 @@ jobs:
     - name: Create the json file
       run: |
         terraform output -json > output.json
-        cat output.json | jq -r --stream '.'
+        cat output.json
+        cat output.json | jq -r '.public_ip.value'
 
     - name: Extract version from package.json
       uses: sergeysova/jq-action@v2
       id: ip
       with:
-        cmd: 'jq -r --stream .public_ip.value output.json' 
+        cmd: 'jq -r .public_ip.value output.json' 
     
     - name: Show my version
       run: 'echo "mon ip is ${{ steps.extract-ip.outputs.value }}"'
