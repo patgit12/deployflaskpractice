@@ -42,7 +42,7 @@ jobs:
 
     - name: Create the json file
       run: |
-        terraform output -json > output.json
+        terraform-bin output -json > output.json
         cat output.json
         cat output.json | jq -r '.public_ip.value'
 
